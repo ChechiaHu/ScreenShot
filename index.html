@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Canvas Examples</title>
+<meta name="description" content="">
+<meta name="keywords" content="">
+<link href="" rel="stylesheet">
+<style type="text/css">
+    #canvas {
+      /*background-color: rgba(255, 255, 255, 1);*/
+    }
+
+    button {
+        padding: 20px;
+        border: 1px black solid;
+        border-radius: 12px;
+        background: white;
+        font-size: 12pt;
+    }
+
+    button:hover {
+        background: #a9d9fb;
+    }
+
+    .demo {
+        margin: 40px; 
+    }
+
+    .imgitem {
+        border: 1px black solid;
+        width: 23%;
+        margin: 0 20px 20px 0;
+        display: inline-block;
+    }
+
+    .imgitem img {
+        width: 100%;
+    }
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</head>
+<body>
+    <div style="margin: 20px; text-align: center;">
+        <canvas id="canvas" style="border: 2px black solid">
+            Your browser does not support HTML5 Canvas element
+        </canvas>
+        <div><button onclick="screenshot()">Click me</button></div>
+    </div>
+    <div class="demo">
+        Files:
+        <div id="demo">
+            
+        </div>
+    </div>
+    <script type="text/javascript">
+
+        var x = 20;
+        var y = 20;
+        var r = 10; // ball radius
+        var dx = 0.5; // x-axis delta per movement
+        var dy = 0.5; // y-axis delta per movement
+        var width = 1000; // Canvas width
+        var height = 400; // Canvas heigt
+        var speed = 3; // time interval in millisec
+
+        var canvas = document.getElementById("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        if (canvas.getContext("2d")) {
+            var context = canvas.getContext("2d");
+            init();
+        }
+
+        function init() {
+            context.fillStyle = getRandomColor();
+            return setInterval(draw, speed);
+        }
+
+        function drawCircle(x, y, r) {
+            context.clearRect(0, 0, width, height);
+            context.beginPath();
+            var tmp = context.fillStyle;
+            // Fill the path
+            context.fillStyle = "#FFFFFF";
+            context.fillRect(0,0,width, height);
+            context.fillStyle = tmp;
+            context.arc(x, y, r, 0, Math.PI * 2, false);
+            context.closePath();
+         
+            context.fill();
+        }
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++ ) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function draw() {
+
+         drawCircle(x, y, r);
+         
+         if (x + r + dx > width || x - r + dx < 0) {
+          // boing();
+          context.fillStyle = getRandomColor();
+          dx = -dx;
+         }
+         if (y + r + dy > height || y - r + dy < 0) {
+          // boing();
+          context.fillStyle = getRandomColor();
+          dy = -dy;
+         }
+
+         x += dx;
+         y += dy;
+        }
+
+        function boing() {
+         var audio = new Audio();
+
+         if (audio.canPlayType("audio/mp3")) {
+          audio.src = "http://www.kodyaz.com/html5/boing-sound-in-mp3-format.mp3";
+         }
+         else if (audio.canPlayType("audio/wav")) {
+          audio.src = "http://www.kodyaz.com/html5/boing-sound-in-wav-format.wav";
+         }
+         // else if (audio.canPlayType("audio/ogg")) {
+         // audio.src = "newsound.mp3";
+         // }
+
+         audio.play();
+        }
+    </script>
+    <script>
+        function screenshot(){
+            var canvas  = document.getElementById("canvas");
+            var dataURL = canvas.toDataURL();
+            console.log(dataURL);
+
+
+            $.ajax({
+              type: "POST",
+              url: "upload.php",
+              data: { 
+                 imgBase64: dataURL
+              }
+            }).done(function(o) {
+              console.log('saved');
+              console.log(o);
+              addImg(o);
+            });
+
+        }
+
+        function init() {
+            $.ajax({
+                type: "GET",
+                url: "allfile.php"
+            }).done(function(o) {
+                o = JSON.parse(o);
+                console.log(o['files']);
+                o['files'].forEach(function(element, index, array) {
+                    addImg("./uploads/thumbnail/"+element);
+                });
+            });
+        }
+
+        function addImg(path) {
+            var div = $('<div class="imgitem"></div>');
+            var img = $('<img src="'+path+'">');
+            var full_path = path.replace('thumbnail', 'img');
+            var a = $('<a href="'+full_path+'" target="_blank"></a>');
+            $(a).append(img);
+            $(div).append(a);
+            $('#demo').prepend(div);
+        }
+        init();
+    </script>
+
+</body>
+</html>
